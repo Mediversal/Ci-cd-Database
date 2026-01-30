@@ -1,0 +1,33 @@
+name: Database CI/CD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "migrations/**"
+
+jobs:
+  deploy-db:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get install -y postgresql-client
+
+      - name: Run DB migrations
+        env:
+          PGPASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          for file in migrations/*.sql; do
+            echo "Running $file"
+            psql \
+              -h ${{ secrets.DB_HOST }} \
+              -U ${{ secrets.DB_USER }} \
+              -d ${{ secrets.DB_NAME }} \
+              -p ${{ secrets.DB_PORT }} \
+              -f "$file"
+          done
